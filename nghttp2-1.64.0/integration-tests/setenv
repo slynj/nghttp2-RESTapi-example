@@ -1,0 +1,14 @@
+#!/bin/sh -e
+
+libdir="/Users/slynj/Documents/Github/nghttp2-RESTapi-example/nghttp2-1.64.0/lib"
+if [ -d "$libdir/.libs" ]; then
+    libdir="$libdir/.libs"
+fi
+
+export CGO_CFLAGS="-I/Users/slynj/Documents/Github/nghttp2-RESTapi-example/nghttp2-1.64.0/lib/includes -I/Users/slynj/Documents/Github/nghttp2-RESTapi-example/nghttp2-1.64.0/lib/includes -g -O2"
+export CGO_CPPFLAGS=""
+export CGO_LDFLAGS="-L$libdir "
+export LD_LIBRARY_PATH="$libdir"
+export DYLD_LIBRARY_PATH="$libdir"
+export GODEBUG=cgocheck=0
+"$@"

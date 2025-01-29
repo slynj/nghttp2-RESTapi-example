@@ -48,6 +48,7 @@ int main() {
             res.end(jsonString);
         } else if (req.method() == "POST") {
             // curl --http2-prior-knowledge -X POST http://localhost:3000/users -d '{"id":123456, "name":"Satoru"}'
+            // curl --http2-prior-knowledge -X POST http://localhost:3000/users -d '{"ids":123456, "names":"Satoru"}'
 
             req.on_data([&res](const uint8_t *data, std::size_t len) {
                 std::string body(reinterpret_cast<const char *>(data), len);
@@ -55,6 +56,11 @@ int main() {
                 Json::Value requestBody;
                 std::string errors;
                 std::istringstream iss(body);
+
+                if (!requestBody.isMember("name") || !requestBody.isMember("id")) {
+                    res.write_head(404);
+                    res.end("{\"error\": \"Key not found\"}\n");
+                }
 
                 if (Json::parseFromStream(reader, iss, &requestBody, &errors)) {
                     int userID = requestBody["id"].asInt();
@@ -110,6 +116,46 @@ int main() {
             }
             
         } else if (req.method() == "PUT") {
+            // curl --http2-prior-knowledge -X PUT http://localhost:3000/users/753951 -d '{"name":"Lyn Jeong"}'
+            // curl --http2-prior-knowledge -X PUT http://localhost:3000/users/000000 -d '{"name":"Geto"}'
+            // curl --http2-prior-knowledge -X PUT http://localhost:3000/users/753951 -d '{"names":"Lyn Jeong"}'
+
+            req.on_data([&res, userID](const uint8_t *data, std::size_t len) {
+                std::string body(reinterpret_cast<const char *>(data), len);
+                Json::CharReaderBuilder reader;
+                Json::Value requestBody;
+                std::string errors;
+                std::istringstream iss(body);
+
+                if (Json::parseFromStream(reader, iss, &requestBody, &errors)) {
+                    if (!requestBody.isMember("name")) {
+                        res.write_head(404);
+                        res.end("{\"error\": \"Key not found\"}\n");
+                    }
+
+                    if (userData.find(userID) != userData.end()) {
+                        userData[userID] = requestBody["name"].asString();
+
+                        Json::Value responseJson;
+                        responseJson["message"] = "User updated successfully";
+                        responseJson["id"] = userID;
+                        responseJson["name"] = userData[userID];
+
+                        Json::StreamWriterBuilder writer;
+                        std::string jsonResponse = Json::writeString(writer, responseJson) + "\n";
+
+                        res.write_head(200);
+                        res.end(jsonResponse);
+                    } else {
+                        res.write_head(404);
+                        res.end("{\"error\": \"User not found\"}\n");
+                    }
+                } else {
+                    res.write_head(400);
+                    res.end(R"({"error": "Invalid JSON"})");
+                }
+
+            });
 
         } else if (req.method() == "DELETE") {
 

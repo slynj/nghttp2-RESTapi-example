@@ -154,11 +154,27 @@ int main() {
                     res.write_head(400);
                     res.end(R"({"error": "Invalid JSON"})");
                 }
-
             });
 
         } else if (req.method() == "DELETE") {
+            // curl --http2-prior-knowledge -X DELETE http://localhost:3000/users/753951
+            // curl --http2-prior-knowledge -X DELETE http://localhost:3000/users/000000
 
+            if (userData.find(userID) != userData.end()) {
+                std::string userName = userData[userID];
+
+                if (userData.erase(userID) > 0) {
+                    res.write_head(200);
+                    res.end("{\"message\": \"User " + userName + " deleted successfully\"}\n");
+                } else {
+                    res.write_head(404);
+                    res.end("{\"error\": \"Failed to delete " + userName + "\"}\n");
+                }
+
+            } else {
+                res.write_head(404);
+                res.end("{\"error\": \"User not found\"}\n");
+            }
         } else {
             // curl --http2-prior-knowledge -X POST http://localhost:3000/users/753951 -d '{"id":789012, "name":"Geto"}'
 

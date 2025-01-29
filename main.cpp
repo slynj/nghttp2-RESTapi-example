@@ -41,17 +41,43 @@ int main() {
 
     server.handle("/users", [](const request &req, const response &res) {
         if (req.method() == "GET") {
+            // curl --http2-prior-knowledge GET http://localhost:3000/users
+
             Json::StreamWriterBuilder writer;
             std::string jsonString = Json::writeString(writer, getUsersJson()) + "\n";
 
             res.write_head(200);
             res.end(jsonString);
-            
-
-
-
-
         } else if (req.method() == "POST") {
+            // curl --http2-prior-knowledge POST http://localhost:3000/users -d '{"id":123456, "name":"Satoru"}'
+
+            req.on_data([&res](const uint8_t *data, std::size_t len) {
+                std::string body(reinterpret_cast<const char *>(data), len);
+                Json::CharReaderBuilder reader;
+                Json::Value requestBody;
+                std::string errors;
+                std::istringstream iss(body);
+
+                if (Json::parseFromStream(reader, iss, &requestBody, &errors)) {
+                    int userID = requestBody["id"].asInt();
+                    std::string userName = requestBody["name"].asString();
+                    userData[userID] = userName;
+
+                    Json::Value responseJson;
+                    responseJson["message"] = "User added successfully";
+                    responseJson["id"] = userID;
+                    responseJson["name"] = userName;
+
+                    Json::StreamWriterBuilder writer;
+                    std::string jsonResponse = Json::writeString(writer, responseJson) + "\n";
+
+                    res.write_head(201);
+                    res.end(jsonResponse);
+                } else {
+                    res.write_head(400);
+                    res.end(R"({"error": "Invalid JSON"})");
+                }
+            });
 
         } else {
 

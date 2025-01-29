@@ -91,6 +91,9 @@ int main() {
         int userID = std::stoi(userIDStr);
 
         if (req.method() == "GET") {
+            // curl --http2-prior-knowledge -X GET http://localhost:3000/users/753951
+            // curl --http2-prior-knowledge -X GET http://localhost:3000/users/000000
+
             if (userData.find(userID) != userData.end()) {
                 Json::Value userJson;
                 userJson["id"] = userID;
@@ -101,6 +104,9 @@ int main() {
 
                 res.write_head(200);
                 res.end(jsonString);
+            } else {
+                res.write_head(404);
+                res.end("{\"error\": \"User not found\"}\n");
             }
             
         } else if (req.method() == "PUT") {
@@ -108,7 +114,7 @@ int main() {
         } else if (req.method() == "DELETE") {
 
         } else {
-            // curl --http2-prior-knowledge -X GET http://localhost:3000/users/000000
+            // curl --http2-prior-knowledge -X POST http://localhost:3000/users/753951 -d '{"id":789012, "name":"Geto"}'
 
             res.write_head(405);
             res.end("{\"error\": \"Method not allowed\"}\n");

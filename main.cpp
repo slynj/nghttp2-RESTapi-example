@@ -22,8 +22,6 @@ Json::Value getUsersJson() {
         users.append(userJson);
     }
 
-    // std::cout << users << std::endl;
-
     return users;
 }
 
@@ -41,7 +39,7 @@ int main() {
 
     server.handle("/users", [](const request &req, const response &res) {
         if (req.method() == "GET") {
-            // curl --http2-prior-knowledge GET http://localhost:3000/users
+            // curl --http2-prior-knowledge -X GET http://localhost:3000/users
 
             Json::StreamWriterBuilder writer;
             std::string jsonString = Json::writeString(writer, getUsersJson()) + "\n";
@@ -49,7 +47,7 @@ int main() {
             res.write_head(200);
             res.end(jsonString);
         } else if (req.method() == "POST") {
-            // curl --http2-prior-knowledge POST http://localhost:3000/users -d '{"id":123456, "name":"Satoru"}'
+            // curl --http2-prior-knowledge -X POST http://localhost:3000/users -d '{"id":123456, "name":"Satoru"}'
 
             req.on_data([&res](const uint8_t *data, std::size_t len) {
                 std::string body(reinterpret_cast<const char *>(data), len);
@@ -80,8 +78,40 @@ int main() {
             });
 
         } else {
+            // curl --http2-prior-knowledge -X PUT http://localhost:3000/users
+
             res.write_head(405);
-            res.end(R"({"error": "Method not allowed"})");
+            res.end("{\"error\": \"Method not allowed\"}\n");
+        }
+    });
+
+    server.handle("/users/", [](const request &req, const response &res) {
+        std::string path = req.uri().path;
+        std::string userIDStr = path.substr(path.find_last_of('/') + 1);
+        int userID = std::stoi(userIDStr);
+
+        if (req.method() == "GET") {
+            if (userData.find(userID) != userData.end()) {
+                Json::Value userJson;
+                userJson["id"] = userID;
+                userJson["name"] = userData[userID];
+
+                Json::StreamWriterBuilder writer;
+                std::string jsonString = Json::writeString(writer, userJson) + "\n";
+
+                res.write_head(200);
+                res.end(jsonString);
+            }
+            
+        } else if (req.method() == "PUT") {
+
+        } else if (req.method() == "DELETE") {
+
+        } else {
+            // curl --http2-prior-knowledge -X GET http://localhost:3000/users/000000
+
+            res.write_head(405);
+            res.end("{\"error\": \"Method not allowed\"}\n");
         }
     });
 

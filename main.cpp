@@ -80,7 +80,8 @@ int main() {
             });
 
         } else {
-
+            res.write_head(405);
+            res.end(R"({"error": "Method not allowed"})");
         }
     });
 

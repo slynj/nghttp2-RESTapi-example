@@ -42,10 +42,11 @@ int main() {
     server.handle("/users", [](const request &req, const response &res) {
         if (req.method() == "GET") {
             Json::StreamWriterBuilder writer;
-            std::string jsonString = Json::writeString(writer, getUsersJson());
+            std::string jsonString = Json::writeString(writer, getUsersJson()) + "\n";
 
             res.write_head(200);
             res.end(jsonString);
+            
 
 
 

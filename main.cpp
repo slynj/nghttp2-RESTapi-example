@@ -57,30 +57,32 @@ int main() {
                 std::string errors;
                 std::istringstream iss(body);
 
-                if (!requestBody.isMember("name") || !requestBody.isMember("id")) {
-                    res.write_head(404);
-                    res.end("{\"error\": \"Key not found\"}\n");
-                }
-
                 if (Json::parseFromStream(reader, iss, &requestBody, &errors)) {
-                    int userID = requestBody["id"].asInt();
-                    std::string userName = requestBody["name"].asString();
-                    userData[userID] = userName;
+                    if (!(requestBody.isMember("name") && requestBody.isMember("id"))) {
+                        res.write_head(404);
+                        res.end("{\"error\": \"Key not found\"}\n");
+                    } else {
+                        int userID = requestBody["id"].asInt();
+                        std::string userName = requestBody["name"].asString();
+                        userData[userID] = userName;
 
-                    Json::Value responseJson;
-                    responseJson["message"] = "User added successfully";
-                    responseJson["id"] = userID;
-                    responseJson["name"] = userName;
+                        Json::Value responseJson;
+                        responseJson["message"] = "User added successfully";
+                        responseJson["id"] = userID;
+                        responseJson["name"] = userName;
 
-                    Json::StreamWriterBuilder writer;
-                    std::string jsonResponse = Json::writeString(writer, responseJson) + "\n";
+                        Json::StreamWriterBuilder writer;
+                        std::string jsonResponse = Json::writeString(writer, responseJson) + "\n";
 
-                    res.write_head(201);
-                    res.end(jsonResponse);
+                        res.write_head(201);
+                        res.end(jsonResponse);
+                        }
+                    
                 } else {
                     res.write_head(400);
                     res.end(R"({"error": "Invalid JSON"})");
                 }
+                
             });
 
         } else {
@@ -131,24 +133,24 @@ int main() {
                     if (!requestBody.isMember("name")) {
                         res.write_head(404);
                         res.end("{\"error\": \"Key not found\"}\n");
-                    }
-
-                    if (userData.find(userID) != userData.end()) {
-                        userData[userID] = requestBody["name"].asString();
-
-                        Json::Value responseJson;
-                        responseJson["message"] = "User updated successfully";
-                        responseJson["id"] = userID;
-                        responseJson["name"] = userData[userID];
-
-                        Json::StreamWriterBuilder writer;
-                        std::string jsonResponse = Json::writeString(writer, responseJson) + "\n";
-
-                        res.write_head(200);
-                        res.end(jsonResponse);
                     } else {
-                        res.write_head(404);
-                        res.end("{\"error\": \"User not found\"}\n");
+                        if (userData.find(userID) != userData.end()) {
+                            userData[userID] = requestBody["name"].asString();
+
+                            Json::Value responseJson;
+                            responseJson["message"] = "User updated successfully";
+                            responseJson["id"] = userID;
+                            responseJson["name"] = userData[userID];
+
+                            Json::StreamWriterBuilder writer;
+                            std::string jsonResponse = Json::writeString(writer, responseJson) + "\n";
+
+                            res.write_head(200);
+                            res.end(jsonResponse);
+                        } else {
+                            res.write_head(404);
+                            res.end("{\"error\": \"User not found\"}\n");
+                        }
                     }
                 } else {
                     res.write_head(400);
